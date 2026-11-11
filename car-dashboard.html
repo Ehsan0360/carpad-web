@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>داشبورد خودرو</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"BRoyaBold";src:local("B Roya Bold"),local("BRoya-Bold"),local("B Roya"),local("BRoya");font-weight:700}
+:root{--bg:#0b0f14;--card:#151c25;--card2:#1d2733;--fg:#eef3f8;--mut:#8a97a6;--acc:#3ea6ff;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:"BRoyaBold","B Roya","BRoya","Vazirmatn",Tahoma,sans-serif!important;font-weight:700!important}
+body{margin:0;height:100%;background:var(--bg);color:var(--fg);user-select:none}
+#app{display:flex;height:100%}
+nav{width:104px;background:var(--card);display:flex;flex-direction:column;gap:10px;padding:12px 8px;justify-content:center}
+nav button{background:none;border:0;color:var(--mut);font-size:15px;padding:14px 4px;border-radius:16px;cursor:pointer}
+nav button .i{display:block;font-size:30px;margin-bottom:4px}
+nav button.on{background:var(--card2);color:var(--acc)}
+main{flex:1;padding:16px;overflow:auto}
+.view{display:none;height:100%}.view.on{display:block}
+.home{display:grid;grid-template-columns:minmax(280px,1fr) 1.7fr;gap:14px;height:100%}
+.col{display:flex;flex-direction:column;gap:14px;min-height:0}
+.card{background:var(--card);border-radius:24px;padding:18px}
+.big{font-size:64px;line-height:1.1}.mut{color:var(--mut);font-size:17px}
+.dates{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-top:8px;font-size:18px}
+.dates span:nth-child(odd){color:var(--mut)}
+.mapcard{padding:0;position:relative;overflow:hidden;min-height:320px;height:100%}
+#map{position:absolute;inset:0;background:#1a222c;overflow:hidden}
+#layer{position:absolute;left:0;top:0;will-change:transform}
+#car{position:absolute;left:50%;top:50%;width:46px;height:46px;transform:translate(-50%,-50%);transition:transform .6s linear;filter:drop-shadow(0 2px 6px #000a)}
+.mbar{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:10px;justify-content:space-between;pointer-events:none}
+.mbar button{pointer-events:auto;background:#151c25ee;color:var(--fg);border:0;border-radius:14px;padding:12px 18px;font-size:16px;cursor:pointer}
+#mstat{position:absolute;top:12px;right:12px;background:#151c25ee;border-radius:12px;padding:8px 12px;font-size:14px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;margin-bottom:16px}
+.tile{background:var(--card);border-radius:22px;padding:20px 8px;text-align:center;color:var(--fg);text-decoration:none;font-size:17px}
+.tile .i{display:block;font-size:40px;margin-bottom:6px}
+.ctl{display:flex;justify-content:center;align-items:center;gap:22px;margin:16px 0}
+.ctl button{width:72px;height:72px;border-radius:50%;border:0;background:var(--card2);color:var(--fg);font-size:28px;cursor:pointer}
+.ctl button.p{width:92px;height:92px;background:var(--acc);color:#04121f;font-size:38px}
+input[type=range]{width:100%;accent-color:var(--acc);height:36px}
+.btn{display:inline-block;background:var(--card2);color:var(--fg);border:0;border-radius:14px;padding:14px 20px;font-size:16px;cursor:pointer}
+ol{list-style:none;margin:10px 0 0;padding:0;max-height:30vh;overflow:auto}
+li{padding:14px;border-radius:12px;font-size:18px;cursor:pointer}li.on{background:var(--card2);color:var(--acc)}
+@media(max-width:800px){.home{grid-template-columns:1fr;height:auto}nav{width:76px}.big{font-size:48px}}
+</style>
+</head>
+<body>
+<div id="app">
+<nav>
+<button data-v="home" class="on"><span class="i">🏠</span>خانه</button>
+<button data-v="music"><span class="i">🎵</span>موزیک</button>
+<button data-v="apps"><span class="i">🧭</span>برنامه‌ها</button>
+<button id="fs"><span class="i">⛶</span>تمام‌صفحه</button>
+</nav>
+<main>
+<section id="home" class="view on">
+<div class="home">
+<div class="col">
+<div class="card">
+<div class="big" id="clock">--:--:--</div>
+<div class="dates"><span>روز</span><span id="wd"></span><span>شمسی</span><span id="jd"></span><span>میلادی</span><span id="gd"></span><span>قمری</span><span id="hd"></span></div>
+</div>
+<div class="card"><div style="display:flex;align-items:baseline;gap:10px"><div class="big" id="speed">--</div><div class="mut">کیلومتر بر ساعت</div></div><div class="mut" id="gps" style="font-size:14px">در انتظار GPS…</div></div>
+<div class="card"><div class="mut">در حال پخش</div><div style="font-size:22px;margin-top:6px" id="np">چیزی پخش نمی‌شود</div></div>
+</div>
+<div class="card mapcard">
+<div id="map"><div id="layer"></div>
+<svg id="car" viewBox="0 0 46 46"><circle cx="23" cy="23" r="21" fill="#3ea6ff" stroke="#fff" stroke-width="3"/><path d="M23 9 L33 33 L23 28 L13 33 Z" fill="#fff"/></svg></div>
+<div id="mstat">نقشه: در انتظار موقعیت…</div>
+<div class="mbar"><button id="zo">−</button><button id="gm">باز کردن Google Maps</button><button id="zi">+</button></div>
+</div>
+</div>
+</section>
+<section id="music" class="view">
+<div class="tiles" id="mtiles"></div>
+<div class="card">
+<div style="font-size:26px;min-height:38px" id="title">یک آهنگ اضافه کنید</div>
+<input type="range" id="seek" min="0" max="100" value="0">
+<div class="ctl"><button id="prev">⏮</button><button id="play" class="p">▶</button><button id="next">⏭</button></div>
+<div style="display:flex;gap:12px;align-items:center"><span>🔈</span><input type="range" id="vol" min="0" max="1" step="0.05" value="1"><span>🔊</span></div>
+<label class="btn" style="margin-top:12px">افزودن آهنگ از حافظه<input type="file" id="files" accept="audio/*" multiple hidden></label>
+<ol id="list"></ol>
+</div>
+</section>
+<section id="apps" class="view"><div class="tiles" id="all"></div></section>
+</main>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const I=(p,fb)=>"intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package="+p+";S.browser_fallback_url="+encodeURIComponent(fb||"https://play.google.com/store/apps/details?id="+p)+";end";
+const A={gm:["🗺️","نقشه گوگل",I("com.google.android.apps.maps","https://maps.google.com")],wz:["🚗","ویز",I("com.waze","https://waze.com/ul")],ne:["📍","نشان","https://neshan.org"],ba:["🧭","بلد",I("ir.balad","https://balad.ir")],
+yt:["▶️","یوتیوب",I("com.google.android.youtube","https://m.youtube.com")],ym:["🎶","یوتیوب موزیک",I("com.google.android.apps.youtube.music")],sp:["🎧","اسپاتیفای",I("com.spotify.music")],
+sm:["🎵","سامسونگ موزیک",I("com.sec.android.app.music")],mi:["🎼","شیائومی موزیک",I("com.miui.player")],mx:["🎬","MX Player",I("com.mxtech.videoplayer.ad")],
+tl:["📞","تماس","tel:"],sg:["💬","پیام","sms:"]};
+const tile=k=>`<a class="tile" href="${A[k][2]}"><span class="i">${A[k][0]}</span>${A[k][1]}</a>`;
+$("#all").innerHTML=Object.keys(A).map(tile).join("");
+$("#mtiles").innerHTML=["sm","mi","mx","ym","sp","yt"].map(tile).join("");
+document.querySelectorAll("nav [data-v]").forEach(b=>b.onclick=()=>{
+document.querySelectorAll("nav button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===b.dataset.v));setTimeout(()=>draw(true),50)});
+function tick(){const d=new Date();
+$("#clock").textContent=d.toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false});
+$("#wd").textContent=d.toLocaleDateString("fa-IR",{weekday:"long"});
+$("#jd").textContent=d.toLocaleDateString("fa-IR-u-ca-persian",{day:"numeric",month:"long",year:"numeric"});
+$("#gd").textContent=d.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+$("#hd").textContent=d.toLocaleDateString("fa-IR-u-ca-islamic-umalqura",{day:"numeric",month:"long",year:"numeric"})}
+tick();setInterval(tick,1000);
+let z=16,pos=null,hd=0,shown=false;const mp=$("#map"),layer=$("#layer"),car=$("#car"),tiles={};
+function wp(lat,lon){const n=256*2**z,s=Math.sin(lat*Math.PI/180);return[(lon+180)/360*n,(0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n]}
+function draw(first){if(!pos)return;const w=mp.clientWidth,h=mp.clientHeight;if(!w)return;const[px,py]=wp(pos[0],pos[1]),n=2**z,need=new Set();
+for(let x=Math.floor((px-w/2)/256)-1;x<=Math.floor((px+w/2)/256)+1;x++)for(let y=Math.floor((py-h/2)/256)-1;y<=Math.floor((py+h/2)/256)+1;y++){if(y<0||y>=n)continue;const k=z+"/"+x+"/"+y;need.add(k);
+if(!tiles[k]){const i=new Image();i.draggable=false;i.src="https://tile.openstreetmap.org/"+z+"/"+(((x%n)+n)%n)+"/"+y+".png";i.style.cssText="position:absolute;left:"+x*256+"px;top:"+y*256+"px;width:256px;height:256px";layer.appendChild(i);tiles[k]=i}}
+for(const k in tiles)if(!need.has(k)){tiles[k].remove();delete tiles[k]}
+layer.style.transition=first?"none":"transform 1s linear";layer.style.transform="translate("+(w/2-px)+"px,"+(h/2-py)+"px)";
+car.style.transform="translate(-50%,-50%) rotate("+hd+"deg)"}
+function zoom(d){z=Math.max(12,Math.min(18,z+d));for(const k in tiles){tiles[k].remove();delete tiles[k]}draw(true)}
+$("#zi").onclick=()=>zoom(1);$("#zo").onclick=()=>zoom(-1);addEventListener("resize",()=>draw(true));
+$("#gm").onclick=()=>{const q=pos?pos[0]+","+pos[1]:"";location.href="intent://maps.google.com/maps?q="+q+"#Intent;scheme=https;package=com.google.android.apps.maps;S.browser_fallback_url="+encodeURIComponent("https://www.google.com/maps?q="+q)+";end"};
+let lp=null,sv=0;
+function hav(a,b,c,d){const R=6371000,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+function startGps(){const g=$("#gps");
+if(!navigator.geolocation){g.textContent="GPS در این مرورگر در دسترس نیست";return}
+navigator.geolocation.watchPosition(p=>{const c=p.coords;let v=null;
+if(typeof c.speed==="number"&&!isNaN(c.speed))v=c.speed;
+else if(lp){const dt=(p.timestamp-lp.t)/1000;if(dt>0.4&&c.accuracy<40)v=hav(lp.a,lp.o,c.latitude,c.longitude)/dt}
+lp={a:c.latitude,o:c.longitude,t:p.timestamp};
+g.textContent="دقت GPS: "+Math.round(c.accuracy).toLocaleString("fa-IR")+" متر";
+let k=0;if(v!=null){sv=sv?sv*0.5+v*0.5:v;k=sv*3.6;if(k<2)k=0;$("#speed").textContent=Math.round(k).toLocaleString("fa-IR")}
+pos=[c.latitude,c.longitude];if(typeof c.heading==="number"&&!isNaN(c.heading)&&k>3)hd=c.heading;
+$("#mstat").textContent="نقشه OpenStreetMap";draw(!shown);shown=true;
+},e=>{g.textContent=e.code===1?"دسترسی موقعیت رد شد؛ در تنظیمات مرورگر اجازه بدهید":"سیگنال GPS ضعیف است"},{enableHighAccuracy:true,maximumAge:0,timeout:20000})}
+startGps();
+async function wake(){try{await navigator.wakeLock.request("screen")}catch(e){}}
+document.addEventListener("click",wake,{once:true});
+$("#fs").onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+const au=new Audio(),pl=[];let cur=-1;
+function render(){$("#list").innerHTML=pl.map((t,i)=>`<li class="${i===cur?"on":""}" data-i="${i}">${t.name}</li>`).join("");
+document.querySelectorAll("#list li").forEach(li=>li.onclick=()=>go(+li.dataset.i))}
+function go(i){if(!pl.length)return;cur=(i+pl.length)%pl.length;au.src=pl[cur].url;au.play().catch(()=>{});
+const n=pl[cur].name;$("#title").textContent=n;$("#np").textContent=n;render();
+try{navigator.mediaSession.metadata=new MediaMetadata({title:n,artist:"داشبورد خودرو"})}catch(e){}}
+$("#files").onchange=e=>{const had=pl.length;for(const f of e.target.files)pl.push({name:f.name.replace(/\.[^.]+$/,""),url:URL.createObjectURL(f)});if(!had&&pl.length)go(0);else render()};
+$("#play").onclick=()=>{if(cur<0)return go(0);au.paused?au.play():au.pause()};
+$("#next").onclick=()=>go(cur+1);$("#prev").onclick=()=>go(cur-1);
+au.onplay=()=>$("#play").textContent="⏸";au.onpause=()=>$("#play").textContent="▶";au.onended=()=>go(cur+1);
+au.ontimeupdate=()=>{if(au.duration)$("#seek").value=au.currentTime/au.duration*100};
+$("#seek").oninput=e=>{if(au.duration)au.currentTime=e.target.value/100*au.duration};
+$("#vol").oninput=e=>au.volume=e.target.value;
+try{const m=navigator.mediaSession;m.setActionHandler("play",()=>au.play());m.setActionHandler("pause",()=>au.pause());m.setActionHandler("nexttrack",()=>go(cur+1));m.setActionHandler("previoustrack",()=>go(cur-1))}catch(e){}
+</script>
+</body>
+</html>
